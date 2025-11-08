@@ -21,7 +21,7 @@ library(openxlsx)
 
 List all group members here (maximum *3* and minimum *2*):
 
--   Liza
+-   Liza Luizova
 -   Maya McNeill
 -   
 
@@ -74,6 +74,9 @@ at_cyclone <- str_c(cyclone_data_address, at_cyclone_filename, sep = "") |>
         cols = `4`,
         # Set the delim and the names
         # YOUR CODE HERE
+        delim = ",", 
+        names = new_columns,
+        too_few = "align_start"
     ) |>
     mutate(
         across(everything(), str_trim),
@@ -93,16 +96,21 @@ at_cyclone <- str_c(cyclone_data_address, at_cyclone_filename, sep = "") |>
         BasinNumberYear,
         # Specify the widths
         # YOUR CODE HERE
+        widths = c(Basin = 2, Number = 2, NameYear = 4)
+        
     ) |>
     separate_wider_position(
         `1`,
         # Specify the widths
         # YOUR CODE HERE
+        widths = c(ObservYear = 4, Month = 2, Day = 2)
+        
     ) |>
     separate_wider_position(
         `2`,
         # Specify the widths
         # YOUR CODE HERE
+        widths=c(Hour=2, Minute=2)
     ) |>
     rename(
         Identifier = `3`
@@ -128,6 +136,51 @@ print(at_cyclone)
 np_cyclone <- str_c(cyclone_data_address, np_cyclone_filename, sep = "") |>
     # ALL of the steps all over again
     # YOUR CODE HERE
+    read_csv(
+    col_names = c(as.character(1:4)),
+    progress = FALSE,
+    show_col_types = FALSE
+  ) |>
+    separate_wider_delim(
+      cols = `4`,
+      delim = ",",
+      names = new_columns,
+      too_few = "align_start"
+    ) |>
+    mutate(
+      across(everything(), str_trim),
+      across(everything(), ~na_if(., "-999")),
+      across(everything(), ~na_if(., "-99")),
+      BasinNumberYear = ifelse(is.na(status), `1`, NA),
+      Name = ifelse(is.na(status), `2`, NA),
+      Entries = ifelse(is.na(status), `3`, NA)
+    ) |>
+    relocate(BasinNumberYear, Name, Entries) |>
+    fill(BasinNumberYear, Name, Entries) |>
+    filter(!is.na(status)) |>
+    select(-Entries) |>
+    separate_wider_position(
+      BasinNumberYear,
+      widths = c(Basin = 2, Number = 2, NameYear = 4)
+    ) |>
+    separate_wider_position(
+      `1`,
+      widths = c(ObservYear = 4, Month = 2, Day = 2)
+    ) |>
+    separate_wider_position(
+      `2`,
+      widths = c(Hour = 2, Minute = 2)
+    ) |>
+    rename(
+      Identifier = `3`
+    ) |>
+    mutate(
+      across(
+        c(NameYear, ObservYear, Month, Day, Hour, Minute, Number),
+        as.integer
+      ),
+      across(max_wind:r_max_wind, as.numeric)
+    )
 
 print(np_cyclone)
 ```
@@ -144,6 +197,7 @@ Name the data frame `cyclones_data_update_0`.
 
 ```{r error=TRUE}
 # YOUR CODE HERE
+cyclones_data_update_0 = rbind(at_cyclone, np_cyclone)
 
 print(cyclones_data_update_0)
 ```
@@ -163,6 +217,7 @@ There are many ways to solve this. My solution is one line and uses `parse_numbe
 ```{r convert_latlon, error=TRUE}
 convert_latlon <- function(latlon) {
     # YOUR CODE HERE
+    parse_number(latlon) * if_else(str_detect(latlon, "[SW]"), -1, 1)
 }
 
 test_data <- c("49W", "49.99W", "49E", "49.99E", "49N", "49.99S", "-0.0W")
@@ -194,7 +249,12 @@ To do this, you must choose whether to use `ObservYear` or `NameYear`.
 cyclones_data_update_2 <- cyclones_data_update_1 |>
     mutate(
         # YOUR CODE HERE
-    )
+        date = make_datetime(year = ObservYear,
+        month = Month,
+        day = Day,
+        hour = Hour,
+        min = Minute)
+      )
 
 print(cyclones_data_update_2)
 ```
@@ -217,7 +277,14 @@ cyclones_data <- cyclones_data_update_2 |>
         category = ordered(
             case_when(
                 # YOUR CODE HERE
-            ),
+                max_wind < 34 ~ "TD",
+                max_wind >= 34 & max_wind <= 63 ~ "TS",
+                max_wind >= 64 & max_wind <= 82 ~ "1",   
+                max_wind >= 83 & max_wind <= 95 ~ "2",     
+                max_wind >= 96 & max_wind <= 112 ~ "3",   
+                max_wind >= 113 & max_wind <= 136 ~ "4",   
+                max_wind >= 137 ~ "5"
+              ),
             levels = cat_levels
         )
     )
@@ -237,6 +304,7 @@ Now that we have a suitable data frame, save it as a parquet file with the file 
 
 ```{r}
 # YOUR CODE HERE
+write_parquet(cyclones_data, "cyclones_data.parquet")
 ```
 
 ```{r}
