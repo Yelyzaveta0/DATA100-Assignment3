@@ -688,29 +688,26 @@ setdiff(aware_countries, covid_countries)
 
 ```{r covid_2020_match_country, error=TRUE}
 covid_2020_match_country <- covid_2020 |>
-  mutate(country = case_when(
-      country == "Bahamas" ~ "Bahamas, The",
-      country == "Brunei" ~ "Brunei Darussalam",
-      country == "Congo" ~ "Congo, Rep.",
-      country == "Congo (Brazzaville)" ~ "Congo, Rep.",
-      country == "Congo (Kinshasa)" ~ "Congo, Dem. Rep.",
-      country == "Czechia" ~ "Czech Republic",
-      country == "Gambia" ~ "Gambia, The",
-      country == "Hong Kong" ~ "Hong Kong SAR, China",
-      country == "Iran" ~ "Iran, Islamic Rep.",
-      country == "Kyrgyzstan" ~ "Kyrgyz Republic",
-      country == "Micronesia (country)" ~ "Micronesia, Fed. Sts.",
-      country == "Moldova" ~ "Moldova",
-      country == "Russia" ~ "Russian Federation",
-      country == "South Korea" ~ "Korea, Rep.",
-      country == "Syria" ~ "Syrian Arab Republic",
-      country == "United States" ~ "United States of America",
-      country == "Venezuela" ~ "Venezuela, RB",
-      country == "Vietnam" ~ "Viet Nam",
-      TRUE ~ country)
-  )
+  mutate(
+    country = case_when(
+      country == "Democratic Republic of Congo" ~ "Congo, Dem. Rep.",
+      country == "Congo"                        ~ "Congo, Rep.",
+      country == "Egypt"                        ~ "Egypt, Arab Rep.",
+      country == "Hong Kong"                    ~ "Hong Kong SAR, China",
+      country == "Laos"                         ~ "Lao PDR",
+      country == "Puerto Rico"                  ~ "Puerto Rico (US)",
+      country == "Slovakia"                     ~ "Slovak Republic",
+      country == "South Korea"                  ~ "Korea, Rep.",
+      country == "Turkey"                       ~ "Turkiye",
+      country == "Vietnam"                      ~ "Viet Nam",
+      country == "Yemen"                        ~ "Yemen, Rep.",
+      TRUE ~ country
+    )
+  ) |>
 
+  filter(country %in% aware_countries)
 covid_2020_match_country
+
 ```
 
 ```{r}
