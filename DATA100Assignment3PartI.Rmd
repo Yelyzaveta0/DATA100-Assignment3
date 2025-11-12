@@ -633,12 +633,13 @@ aware_fixed_country_match <- aware_fixed_country |>
       country == "Bolivia (Plurinational State of)"       ~ "Bolivia",
       country == "Congo (Democratic Republic of the)"     ~ "Congo, Dem. Rep.",
       country == "Egypt"                                  ~ "Egypt, Arab Rep.",
+      country == "Hong Kong"                              ~ "Hong Kong SAR, China",
       country == "Lao People's Democratic Republic"       ~ "Lao PDR",
       country == "North MAcedonia"                        ~ "North Macedonia",
       country == "Puerto Rico"                            ~ "Puerto Rico (US)",
       country == "Slovakia"                               ~ "Slovak Republic",
       country == "South Korea"                            ~ "Korea, Rep.",
-      country == "Turkey"                                 ~ "Turkiye",
+      country == "Turkey"                                 ~ "Türkiye",
       country == "Vietnam"                                ~ "Viet Nam",
       country == "Yemen"                                  ~ "Yemen, Rep.",
       TRUE ~ country
@@ -697,7 +698,7 @@ covid_2020_match_country <- covid_2020 |>
       country == "Puerto Rico"                  ~ "Puerto Rico (US)",
       country == "Slovakia"                     ~ "Slovak Republic",
       country == "South Korea"                  ~ "Korea, Rep.",
-      country == "Turkey"                       ~ "Turkiye",
+      country == "Turkey"                       ~ "Türkiye",
       country == "Vietnam"                      ~ "Viet Nam",
       country == "Yemen"                        ~ "Yemen, Rep.",
       TRUE ~ country
@@ -718,13 +719,13 @@ Okay, now take a quick breather. Grab a tea, go for a walk, rock out to some mus
 Join `aware_pop` and `covid_2020_match_country`, again only keep countries that are in both. Create a new column called `covid_per_capita` based on the total cases divided by total population.
 
 ```{r aware_covid, error=TRUE}
-aware_covid <- inner_join(
-  aware_pop,
-  covid_2020_match_country,
-  by = "country"
-) |>
+aware_covid <- aware_pop |>
+  distinct(country, .keep_all = TRUE) |>
+  inner_join(
+    covid_2020_match_country |> distinct(country, .keep_all = TRUE),
+    by = "country"
+  ) |>
   mutate(covid_per_capita = total_cases / total_population)
-aware_covid
 ```
 
 ```{r}
@@ -785,11 +786,12 @@ To make the data more convenient for Part 2, perform the following operations. T
 happiness <- read.xlsx("DataForTable2.1.xlsx") |>
   janitor::clean_names() |>
   rename(country = country_name) |>
-  drop_na() |>
+  filter(!is.na(ladder_score)) |>
+  arrange(country, desc(year)) |>
   group_by(country) |>
-  arrange(year) |>
-  slice(n()) |>
-  ungroup()
+  slice(1) |>
+  group_by()
+  
 happiness
 ```
 
