@@ -633,7 +633,6 @@ aware_fixed_country_match <- aware_fixed_country |>
       country == "Bolivia (Plurinational State of)"       ~ "Bolivia",
       country == "Congo (Democratic Republic of the)"     ~ "Congo, Dem. Rep.",
       country == "Egypt"                                  ~ "Egypt, Arab Rep.",
-      country == "Hong Kong"                              ~ "Hong Kong SAR, China",
       country == "Lao People's Democratic Republic"       ~ "Lao PDR",
       country == "North MAcedonia"                        ~ "North Macedonia",
       country == "Puerto Rico"                            ~ "Puerto Rico (US)",
@@ -786,12 +785,11 @@ To make the data more convenient for Part 2, perform the following operations. T
 happiness <- read.xlsx("DataForTable2.1.xlsx") |>
   janitor::clean_names() |>
   rename(country = country_name) |>
-  filter(!is.na(ladder_score)) |>
+  drop_na() |>
   group_by(country) |>
-  arrange(desc(year)) |>
-  slice(1) |>
+  arrange(year) |>
+  slice(n()) |>
   ungroup()
-  
 happiness
 ```
 
