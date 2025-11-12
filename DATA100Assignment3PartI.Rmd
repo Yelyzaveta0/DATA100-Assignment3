@@ -789,8 +789,9 @@ happiness <- read.xlsx("DataForTable2.1.xlsx") |>
   filter(!is.na(ladder_score)) |>
   arrange(country, desc(year)) |>
   group_by(country) |>
-  slice(1) 
-
+  slice(1) |>
+  group_by()
+  
 happiness
 ```
 
