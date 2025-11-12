@@ -627,24 +627,33 @@ Use a `case_when()` statement to change the countries in `aware_fixed_country` w
 -   "Bolivia (Plurinational State of)", "Congo (Democratic Republic of the)", "Egypt", "Hong Kong", "Lao People's Democratic Republic", "Slovakia", "North MAcedonia", "South Korea" (be careful with this one!), "Turkey", "Vietnam", "Yemen".
 
 ```{r aware_fixed_country_match}
-aware_fixed_country_match <- aware_fixed_country |>
-    mutate( country = case_when(
-      country == "Bolivia (Plurinational State of)" ~ "Bolivia",
-      country == "Congo (Democratic Republic of the)" ~ "Congo, Dem. Rep.",
-      country == "Egypt" ~ "Egypt, Arab Rep.",
+covid_2020_match_country <- covid_2020 |>
+  mutate(
+    country = case_when(
+      country == "Bahamas" ~ "Bahamas, The",
+      country == "Brunei" ~ "Brunei Darussalam",
+      country == "Congo" ~ "Congo, Rep.",
+      country == "Congo (Brazzaville)" ~ "Congo, Rep.",
+      country == "Congo (Kinshasa)" ~ "Congo, Dem. Rep.",
+      country == "Czechia" ~ "Czech Republic",
+      country == "Gambia" ~ "Gambia, The",
       country == "Hong Kong" ~ "Hong Kong SAR, China",
-      country == "Lao People's Democratic Republic" ~ "Lao PDR",
-      country == "Slovakia" ~ "Slovak Republic",
-      country == "North MAcedonia" ~ "North Macedonia",
+      country == "Iran" ~ "Iran, Islamic Rep.",
+      country == "Kyrgyzstan" ~ "Kyrgyz Republic",
+      country == "Micronesia (country)" ~ "Micronesia, Fed. Sts.",
+      country == "Russia" ~ "Russian Federation",
       country == "South Korea" ~ "Korea, Rep.",
+      country == "Syria" ~ "Syrian Arab Republic",
       country == "Turkey" ~ "Turkiye",
-      country == "Türkiye" ~ "Turkiye",     # <-- new
-      country == "Vietnam" ~ "Viet Nam",    # <-- new
+      country == "Vietnam" ~ "Viet Nam",
+      country == "Egypt" ~ "Egypt, Arab Rep.",
+      country == "Laos" | country == "Lao People's Democratic Republic" ~ "Lao PDR",
+      country == "North Macedonia" | country == "North MAcedonia" ~ "North Macedonia",
       country == "Yemen" ~ "Yemen, Rep.",
-      country == "Puerto Rico" ~ "Puerto Rico (US)",  # <-- new
       TRUE ~ country
     )
-    )
+  )
+
 
 aware_countries <- aware_fixed_country_match |> pull(country)
 print("Countries in aware_countries that aren't in pop_data:")
