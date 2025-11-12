@@ -630,19 +630,18 @@ Use a `case_when()` statement to change the countries in `aware_fixed_country` w
 aware_fixed_country_match <- aware_fixed_country |>
   mutate(
     country = case_when(
-      country == "Bolivia (Plurinational State of)" ~ "Bolivia",
-      country == "Congo (Democratic Republic of the)" ~ "Congo, Dem. Rep.",
-      country == "Egypt" ~ "Egypt, Arab Rep.",
-      country == "Hong Kong" ~ "Hong Kong SAR, China",
-      country == "Lao People's Democratic Republic" ~ "Lao PDR",
-      country == "Slovakia" ~ "Slovak Republic",
-      country == "North MAcedonia" ~ "North Macedonia",
-      country == "South Korea" ~ "Korea, Rep.",
-      country == "Turkey" ~ "Turkiye",
-      country == "Türkiye" ~ "Turkiye",     # <-- new
-      country == "Vietnam" ~ "Viet Nam",    # <-- new
-      country == "Yemen" ~ "Yemen, Rep.",
-      country == "Puerto Rico" ~ "Puerto Rico (US)",  # <-- new
+      country == "Bolivia (Plurinational State of)"       ~ "Bolivia",
+      country == "Congo (Democratic Republic of the)"     ~ "Congo, Dem. Rep.",
+      country == "Egypt"                                  ~ "Egypt, Arab Rep.",
+      country == "Hong Kong"                              ~ "Hong Kong SAR, China",
+      country == "Lao People's Democratic Republic"       ~ "Lao PDR",
+      country == "North MAcedonia"                        ~ "North Macedonia",
+      country == "Puerto Rico"                            ~ "Puerto Rico (US)",
+      country == "Slovakia"                               ~ "Slovak Republic",
+      country == "South Korea"                            ~ "Korea, Rep.",
+      country == "Turkey"                                 ~ "Turkiye",
+      country == "Vietnam"                                ~ "Viet Nam",
+      country == "Yemen"                                  ~ "Yemen, Rep.",
       TRUE ~ country
     )
   )
@@ -809,5 +808,5 @@ write_parquet(happiness, "happiness.parquet")
 ```
 
 ```{r active="", eval=FALSE}
-# END ASSIGNMENT 
+# END ASSIGNMENT #
 ```
