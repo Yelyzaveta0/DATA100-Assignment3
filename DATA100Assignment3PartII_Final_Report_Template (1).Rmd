@@ -12,12 +12,16 @@ List your group members, including their student numbers, here:
 -   Liza Luizova (\169089763)
 -   Craig Finn (\#########)
 
+### How do Arctic environmental changes correlate with global patterns of well being and climate awareness? 
 
 # Data Description
 
-## \<\<Data Set 1\>\>
+## \<\Sea Ice extent data\>\>
 
 ```{r load_data1}
+library(tidyverse)
+library(arrow)
+library(lubridate)
 # Put in your code to load in the data set, along with any
 # necessary cleaning beyond what was done in Part 1
 
@@ -25,13 +29,23 @@ List your group members, including their student numbers, here:
 # when you click "knit", so the placement of this code
 # chunk is purely for your benefit: You can see what happened
 # with your data, which makes it easier to describe below!
+ice_extent <- read_parquet("ice_extent_yeary.parquet") |>
+  filter(region == "Arctic") |>
+  pivot_wider(
+    names_from = name,
+    values_from = value
+  ) |>
+  mutate(ice_loss = max - min) |>
+  select(year, arctic_max_ice = max, arctic_min_ice = min, ice_loss)
+ice_extent
+
 ```
 
-The data come from \<<place>\> and describe \<<more specific description of the data>\>.
+The data is obtained from the National Oceanic and Atmospheric Administration (NOAA), the published Arctic report card for sea ice extent from 1978 to 2023. 
 
-In order to clean the data, we \<\<steps to clean the data, concise but precise enough that a reader could follow your steps without seeing your code\>\>.
+In order to clean the data, we filtered the Arctic region measurements, pivoted to wide format to create separate columns for maximum and minimum ice extent, calculated annual ice loss as the difference between maximum and minimum, and selected relevant columns for analysis, such as year, the change in ice(ice_loss), and maximum/minimum amount of ice across years(arctic_max_ice, arctic_min_ice).  
 
-## \<\<Data Set 2\>\>
+## \<\<Climate awareness data set\>\>
 
 ```{r load_data2}
 # Put in your code to load in the data set, along with any
@@ -39,13 +53,22 @@ In order to clean the data, we \<\<steps to clean the data, concise but precise 
 
 # Reminder: do NOT print your data to the screen unless it's
 # completely necessary
+climate_awareness <- read_parquet("climate_awareness.parquet") |>
+  mutate(
+    high_awareness = aware_alot + aware_moderate,
+    climate_awareness_index = (aware_alot * 1 + aware_moderate * 0.67 + 
+                               aware_alittle * 0.33) / 100
+  ) |>
+  select(country, high_awareness, climate_awareness_index, 
+         aware_no, aware_alittle, aware_moderate, aware_alot)
+climate_awareness
 ```
 
-The data come from \<<place>\> and detail \<<more specific description of the data>\>.
+The data is obtained from Meta's Climate Change Opinion Survey 2022 and detail public awareness levels about climate change definitions across countries.
 
-In order to clean the data, we \<\<steps to clean the data, concise but precise enough that a reader could follow your steps without seeing your code\>\>
+In order to clean the data, we created composite measures including a high awareness percentage (combining "a lot", "moderate" and "a little" awareness) and a weighted climate awareness index to capture the spectrum of awareness levels.Then we selected the relevant columns, such as levels of awareness across countries, that are going to be used for our further exploration.  
 
-## \<\<Data Set 3\>\>
+## \<\<Happiness data set\>\>
 
 ```{r load_data3}
 # Put in your code to load in the data set, along with any
