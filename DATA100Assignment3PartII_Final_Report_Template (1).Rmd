@@ -100,7 +100,7 @@ We explored many aspects of the data, but will demonstrate three. These are the 
 
 The first aspect that we found interesting is shown in @ref(fig:trend_analysis). Countries experiencing the most dramatic Arctic ice loss years show varied happiness responses, with northern countries displaying different patterns than tropical nations.
 
-```{r figure1, fig.cap="Parallel trends in the arctic loss and the average happiness score from 2013-2019, showing potential environmental impacts on global wellbeing."}
+```{r figure1, fig.cap="Parallel trends in the arctic loss and the average happiness score from 2011-2021, showing potential environmental impacts on global wellbeing."}
 # This is an example of how you can control figures and captions in
 # an R chunk. Note that you can reference figures using:
 # \@ref(fig:insight1), where "insight1" is the label of this code
@@ -156,20 +156,20 @@ This insight is supported by the summary statistics in table @ref(tab:summary_st
 # the insights should be the star, not the formatting.
 library(knitr)
 
-summary_table <- combined_data |>
-  filter(year >= 2015) |>
-  group_by(region) |>
+summary_table <- happiness |>
+  inner_join(ice_extent, by = "year") |>
+  filter(year >= 2011 & year <= 2021) |>  # Match your plot timeframe
+  group_by(year) |>
   summarise(
     avg_happiness = mean(happiness_score, na.rm = TRUE),
     avg_ice_loss = mean(ice_loss, na.rm = TRUE),
-    avg_awareness = mean(climate_awareness_index, na.rm = TRUE),
-    correlation_ice_happiness = cor(ice_loss, happiness_score, use = "complete.obs"),
     n_countries = n_distinct(country),
+    happiness_sd = sd(happiness_score, na.rm = TRUE),
     .groups = "drop"
   ) |>
   mutate(across(where(is.numeric), round, 3))
 
-kable(summary_table, caption = "Summary statistics by geographic region (2015-2023)")
+kable(summary_table, caption = "Yearly summary statistics for happiness and ice loss (2011-2021)")
 ```
 The next insight that we found is shown in @ref(fig:awareness_geography). Northern countries closest to the Arctic show both higher climate awareness and more variable responses to environmental changes.
 
