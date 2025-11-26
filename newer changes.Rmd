@@ -1,0 +1,320 @@
+---
+title: "TITLE OF YOUR PROJECT"
+subtitle: "Exploring Disparate Data: Part 3 - Final Report"
+author: "Put your group name here: Liza&Maya"
+date: "Due November 26th, 2025"
+output: pdf_document
+---
+
+List your group members, including their student numbers, here:
+
+-   Maya McNeill ()
+-   Liza Luizova (\\169089763)
+-   Craig Finn (\#########)
+
+### How do Arctic environmental changes correlate with global patterns of well being and climate awareness?
+
+# Data Description
+
+## \<\Sea Ice extent data\>\>
+
+```{r load_data1}
+library(tidyverse)
+library(arrow)
+library(lubridate)
+library(janitor)
+# Put in your code to load in the data set, along with any
+# necessary cleaning beyond what was done in Part 1
+
+# Note that the code in this document will not be shown
+# when you click "knit", so the placement of this code
+# chunk is purely for your benefit: You can see what happened
+# with your data, which makes it easier to describe below!
+ice_extent <- read_parquet("ice_extent_yeary.parquet") |>
+  filter(region == "Arctic") |>
+  pivot_wider(
+    names_from = name,
+    values_from = value
+  ) |>
+  mutate(ice_loss = max - min) |>
+  select(year, arctic_max_ice = max, arctic_min_ice = min, ice_loss)
+ice_extent
+
+```
+
+The data is obtained from the National Oceanic and Atmospheric Administration (NOAA), the published Arctic report card for sea ice extent from 1978 to 2023.
+
+In order to clean the data, we filtered the Arctic region measurements, pivoted to wide format to create separate columns for maximum and minimum ice extent, calculated annual ice loss as the difference between maximum and minimum, and selected relevant columns for analysis, such as year, the change in ice(ice_loss), and maximum/minimum amount of ice across years(arctic_max_ice, arctic_min_ice).
+
+## \<\<Climate awareness data set\>\>
+
+```{r load_data2}
+# Put in your code to load in the data set, along with any
+# necessary cleaning beyond what was done in Part 1
+
+# Reminder: do NOT print your data to the screen unless it's
+# completely necessary
+climate_awareness <- read_parquet("climate_awareness.parquet") |>
+  mutate(
+    high_awareness = aware_alot + aware_moderate,
+    climate_awareness_index = (aware_alot * 1 + aware_moderate * 0.67 + 
+                               aware_alittle * 0.33) / 100
+  ) |>
+
+ mutate(
+    country = case_when(
+      country == "Bolivia.(Plurinational.State.of)"       ~ "Bolivia",
+      country == "Bosnia.and.Herzegovina"                 ~ "Bosnia and Herzegovina",
+      country == "Burkina.Faso"                           ~ "Burkina Faso",
+      country == "Congo.(Democratic.Republic.of.the)"     ~ "Congo, Dem. Rep.",
+      country == "Costa.Rica"                             ~ "Costa Rica",
+      country == "Cote.d'Ivoire"                          ~ "Cote d'Ivoire",
+      country == "Dominican.Republic"                     ~ "Dominican Republic",
+      country == "El.Salvador"                            ~ "El Salvador",
+      country == "Hong.Kong"                              ~ "Hong Kong SAR, China",
+      country == "Lao.People's.Democratic.Republic"       ~ "Lao PDR",
+      country == "New.Zealand"                            ~ "New Zealand",
+      country == "North.MAcedonia"                        ~ "North Macedonia",
+      country == "Puerto.Rico"                            ~ "Puerto Rico (US)",
+      country == "Saudi.Arabia"                           ~ "Saudi Arabia",
+      country == "South.Africa"                           ~ "South Africa",
+      country == "South.Korea"                            ~ "Korea, Rep.",
+      country == "Sri.Lanka"                              ~ "Sri Lanka",
+      country == "Taiwan"                                 ~ "Taiwan",   # ok to keep as-is
+      country == "Trinidad.and.Tobago"                    ~ "Trinidad and Tobago",
+      country == "Turkey"                                 ~ "Turkiye",
+      country == "United.Arab.Emirates"                   ~ "United Arab Emirates",
+      country == "United.Kingdom"                         ~ "United Kingdom",
+      country == "United.States"                          ~ "United States",
+      country == "Vietnam"                                ~ "Viet Nam",
+      country == "Egypt"    ~ "Egypt, Arab Rep.",
+      country == "Slovakia" ~ "Slovak Republic",
+      country == "Yemen"    ~ "Yemen, Rep.",
+      TRUE ~ country
+    )
+  ) |>
+  
+  filter(!country %in% c("Asian.&.Pacific.Islands",
+                         "Caribbean",
+                         "Sub-Saharan.Africa")) |>
+  select(country, high_awareness, climate_awareness_index, 
+         aware_no, aware_alittle, aware_moderate, aware_alot) 
+  
+climate_awareness
+```
+
+The data is obtained from Meta's Climate Change Opinion Survey 2022 and detail public awareness levels about climate change definitions across countries.
+
+In order to clean the data, we created composite measures including a high awareness percentage (combining "a lot", "moderate" and "a little" awareness) and a weighted climate awareness index to capture the spectrum of awareness levels.Then we selected the relevant columns, such as levels of awareness across countries, that are going to be used for our further exploration.
+
+## \<\<Happiness data set\>\>
+
+```{r load_data3}
+# Put in your code to load in the data set, along with any
+# necessary cleaning beyond what was done in Part 1
+happiness <- read_parquet("happiness.parquet") |>
+  select(country, year, happiness_score = ladder_score, 
+        gdp_contribution = explained_by_log_gdp_per_capita, 
+         social_support = explained_by_social_support, 
+         life_expectancy = explained_by_healthy_life_expectancy,
+         freedom = explained_by_freedom_to_make_life_choices, 
+         generosity = explained_by_generosity, 
+         corruption = explained_by_perceptions_of_corruption) |>
+  filter(!is.na(happiness_score)) |>
+  mutate(
+    country = case_when(
+      country == "Côte d’Ivoire"          ~ "Cote d'Ivoire",
+      country == "DR Congo"               ~ "Congo, Dem. Rep.",
+      country == "Egypt"                  ~ "Egypt, Arab Rep.",
+      country == "Hong Kong SAR of China" ~ "Hong Kong SAR, China",
+      country == "Puerto Rico"            ~ "Puerto Rico (US)",
+      country == "Slovakia"               ~ "Slovak Republic",
+      country == "Republic of Korea"      ~ "Korea, Rep.",
+      country == "Türkiye"                ~ "Turkiye",
+      country == "Yemen"                  ~ "Yemen, Rep.",
+      country == "Egypt"                   ~ "Egypt, Arab Rep.",
+      country == "Slovakia"                ~ "Slovak Republic",
+      country == "Taiwan Province of China"~ "Taiwan",
+      country == "Yemen"                   ~ "Yemen, Rep.",
+      TRUE ~ country))
+  
+happiness
+```
+
+This data comes from the World Happiness Report 2023 Statistical Appendix, an annual global produced by the United Nations Sustainable Development Solutions Network.
+
+In order to clean the data, we first selected only the variables relevant to our research question. We then used mutate() with case_when() to recode a set of country names to match the naming conventions used in the climate awareness set.
+
+## Combining the Data
+
+```{r}
+hap_awareness <- happiness |>
+  inner_join(climate_awareness, by = "country")
+```
+
+Explain how any combinations of data were performed. Explain what kind of join was needed, whether columns had to be modified (for example, matching "country" names.)
+
+# Exploratory Data Analysis
+
+To achieve our goals, we explored the data by examining temporal trends in Arctic ice loss, correlating these changes with national happiness metrics, and investigating whether climate awareness moderates these relationships across different geographic regions.
+
+We explored many aspects of the data, but will demonstrate three. These are the relationship between recent Arctic ice loss and national happiness, how climate awareness varies with proximity to the Arctic, and whether countries with higher climate awareness show different patterns in the ice loss-happiness relationship.
+
+The first aspect that we found interesting is shown in @ref(fig:trend_analysis). Countries experiencing the most dramatic Arctic ice loss years show varied happiness responses, with northern countries displaying different patterns than tropical nations.
+
+```{r insight1, fig.cap="This is a figure caption that you will need to change in order to get good marks in the visualization rubric items."}
+library(patchwork)
+cat("Happiness data:\n")
+print(head(happiness))
+cat("Years in happiness:", range(happiness$year, na.rm = TRUE), "\n")
+
+cat("\nClimate awareness data:\n") 
+print(head(climate_awareness))
+
+cat("\nIce extent data:\n")
+print(head(ice_extent))
+cat("Years in ice extent:", range(ice_extent$year, na.rm = TRUE), "\n")
+
+happiness_years <- unique(happiness$year)
+ice_years <- unique(ice_extent$year)
+common_years <- intersect(happiness_years, ice_years)
+cat("\nCommon years:", common_years, "\n")
+
+combined_simple <- happiness |>
+    filter(year %in% common_years) |>
+    group_by(year) |>
+    summarise(avg_happiness = mean(happiness_score, na.rm = TRUE)) |>
+    left_join(ice_extent, by = "year")
+
+p1 <- ggplot(combined_simple) +
+    aes(x = year, y = avg_happiness) +
+    geom_line(color = "blue", size = 1) +
+    geom_point(color = "red", size = 2) +
+    labs(x = "Year", y = "Average Happiness Score",
+         title = "Average Happiness Over Time") +
+    theme_minimal()
+  
+  p2 <- ggplot(combined_simple) +
+    aes(x = year, y = ice_loss) +
+    geom_line(color = "red", size = 1) +
+    geom_point(color = "blue", size = 2) +
+    labs(x = "Year", y = "Ice Loss (million km²)",
+         title = "Arctic Ice Loss Over Time") +
+    theme_minimal()
+  p1 / p2
+```
+
+This insight is supported by the summary statistics in table \@ref(tab:summary_stats)
+
+```{r summary_stats}
+summary_table <- happiness |>
+  inner_join(ice_extent, by = "year") |>
+  filter(year >= 2011 & year <= 2021) |>  # Match your plot timeframe
+  group_by(year) |>
+  summarise(
+    avg_happiness = mean(happiness_score, na.rm = TRUE),
+    avg_ice_loss = mean(ice_loss, na.rm = TRUE),
+    n_countries = n_distinct(country),
+    happiness_sd = sd(happiness_score, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(across(where(is.numeric), round, 3))
+
+kable(summary_table, caption = "Yearly summary statistics for happiness and ice loss (2011-2021)")
+```
+
+The next insight that we found is shown in \@ref(fig:insight2).
+
+```{r}
+awareness_long
+```
+
+```{r}
+
+awareness_long <- climate_awareness |>
+  left_join(happiness, by = "country") |> 
+  pivot_longer(
+    cols = starts_with("aware_"),
+    names_to = "awareness",
+    values_to = "prop"
+  ) |>
+  mutate(
+    awareness = recode(
+      awareness,
+      "aware_no"       = "No awareness",
+      "aware_alittle"  = "A little awareness",
+      "aware_moderate" = "Moderate awareness",
+      "aware_alot"     = "A lot of awareness"
+    ),
+    awareness = factor(
+      awareness,
+      levels = c(
+        "No awareness",
+        "A little awareness",
+        "Moderate awareness",
+        "A lot of awareness"
+      )
+    )
+  )
+
+
+ggplot(awareness_long) +
+  aes(x = prop, y = happiness_score) +
+  geom_point(alpha = 0.5, size = 2, colour = "steelblue") +
+  geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = FALSE,
+    colour = "firebrick",
+    size = 1
+  ) +
+  facet_wrap(~ awareness) +
+  labs(
+    title = "Happiness vs Climate Awareness Across Awareness Levels",
+    subtitle = "Global trend lines reveal how different types of climate awareness relate to happiness",
+    x = "% of population in this awareness category",
+    y = "Happiness score"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(size = 12, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+```{r insight2, fig.height=4, fig.width=6, fig.cap="This is a figure caption that you will need to change in order to get good marks in the visualization rubric items."}
+
+
+```
+
+Finally, \@ref(fig:insight3) shows ...
+
+```{r insight3, fig.height=4, fig.width=6, fig.cap="This is a figure caption that you will need to change in order to get good marks in the visualization rubric items."}
+```
+
+# Conclusion and Future Work
+
+Overall, we found \<<general ideas>\>.
+
+A second paragraph about our findings.
+
+The next steps in this analysis are...
+
+The limitations of this analysis are as follows. (Do not simply list potential issues with sampling, but relate them to your analysis and how they affect your conclusions. An honest and complete acknowledgement of the limitations makes the analysis more trustworthy.)
+
+# References
+
+I am not strict about MLA or APA style or anything like that. For this report, I would much rather have your citations be easy to match to your insights.
+
+The easiest way is to use Rmd's [footnote](https://bookdown.org/yihui/rmarkdown/markdown-syntax.html#inline-formatting) syntax. This will put a number beside the word where the footnote appears, and the full text of the footnote at the bottom of the page (pdf) or end of the document (html). The syntax is:[^1], where I suggest that you put in something like this[^2] to make references for this assignment.
+
+[^1]: See the source view to see this footnote
+
+[^2]: The relevance to the insight is ... . From \<<name of source and name of article>\>, published on \<<date>\>, url: \<<link to page>\>
+
+Alternatively, you could make a list of citations with their main arguments and why they're relevent to your insights, methods, etc.
+
+The link above also references "bibtex" files. These are also extremely convenient, but have a steep learning curve and they make it difficult to tie them to an insight. If you use bibtext, then make sure that you provide a sentence to describe the source and it's relevance when you cite it - don't just add citations to the end of a sentence (this is common practice in academia, but I want to know that your citations are directly relevant for this assignmnet).
