@@ -1,23 +1,33 @@
 ---
-title: "TITLE OF YOUR PROJECT"
+title: "Arctic Change, Awareness and Well Being"
 subtitle: "Exploring Disparate Data: Part 3 - Final Report"
-author: "Put your group name here: Liza&Maya"
+author: "Put your group name here: Liza & Maya"
 date: "Due November 26th, 2025"
-output: pdf_document
+output:
+  pdf_document:
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{float}
 ---
 
 List your group members, including their student numbers, here:
 
--   Maya McNeill (\)
+-   Maya McNeill (169077416)
 -   Liza Luizova (169089763)
 
-### How do Arctic environmental changes relate to global patterns of well being and climate awareness? 
+# How do Arctic environmental changes relate to global patterns of well being and climate awareness? 
 
 # Data Description
 
-## \<\Sea Ice extent data\>\>
+In this project, we analyzed three datasets: ice_extent, climate_awareness, and happiness, to explore how environmental conditions, public attitudes, and well-being indicators vary across countries and over time.
 
-```{r load_data1}
+Our goal was to understand the relationships among these themes by examining trends in Arctic sea ice extent, levels of climate change awareness, and measures of national happiness. Each dataset required us to explore variable types, assess data quality, summarize distributions, and prepare the data for subsequent statistical analysis. 
+
+By comparing the structure and content of these datasets, we aimed to identify patterns, detect possible associations, and build a foundation for deeper analysis in later sections. The descriptions below outline the key variables in each dataset and the initial processing steps we applied.
+
+## Sea Ice extent data
+
+```{r load_ice_extent_data, echo=FALSE, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(arrow)
 library(lubridate)
@@ -44,9 +54,10 @@ The data is obtained from the National Oceanic and Atmospheric Administration (N
 
 In order to clean the data, we filtered the Arctic region measurements, pivoted to wide format to create separate columns for maximum and minimum ice extent, calculated annual ice loss as the difference between maximum and minimum, and selected relevant columns for analysis, such as year, the change in ice(ice_loss), and maximum/minimum amount of ice across years(arctic_max_ice, arctic_min_ice).  
 
-## \<\<Climate awareness data set\>\>
+## Climate awareness data set
 
-```{r load_data2}
+```{r load_climate_awareness_data, echo=FALSE, warning = FALSE, message = FALSE}
+
 # Put in your code to load in the data set, along with any
 # necessary cleaning beyond what was done in Part 1
 
@@ -58,8 +69,46 @@ climate_awareness <- read_parquet("climate_awareness.parquet") |>
     climate_awareness_index = (aware_alot * 1 + aware_moderate * 0.67 + 
                                aware_alittle * 0.33) / 100
   ) |>
+
+ mutate(
+    country = case_when(
+      country == "Bolivia.(Plurinational.State.of)"       ~ "Bolivia",
+      country == "Bosnia.and.Herzegovina"                 ~ "Bosnia and Herzegovina",
+      country == "Burkina.Faso"                           ~ "Burkina Faso",
+      country == "Congo.(Democratic.Republic.of.the)"     ~ "Congo, Dem. Rep.",
+      country == "Costa.Rica"                             ~ "Costa Rica",
+      country == "Cote.d'Ivoire"                          ~ "Cote d'Ivoire",
+      country == "Dominican.Republic"                     ~ "Dominican Republic",
+      country == "El.Salvador"                            ~ "El Salvador",
+      country == "Hong.Kong"                              ~ "Hong Kong SAR, China",
+      country == "Lao.People's.Democratic.Republic"       ~ "Lao PDR",
+      country == "New.Zealand"                            ~ "New Zealand",
+      country == "North.MAcedonia"                        ~ "North Macedonia",
+      country == "Puerto.Rico"                            ~ "Puerto Rico (US)",
+      country == "Saudi.Arabia"                           ~ "Saudi Arabia",
+      country == "South.Africa"                           ~ "South Africa",
+      country == "South.Korea"                            ~ "Korea, Rep.",
+      country == "Sri.Lanka"                              ~ "Sri Lanka",
+      country == "Taiwan"                                 ~ "Taiwan",   # ok to keep as-is
+      country == "Trinidad.and.Tobago"                    ~ "Trinidad and Tobago",
+      country == "Turkey"                                 ~ "Turkiye",
+      country == "United.Arab.Emirates"                   ~ "United Arab Emirates",
+      country == "United.Kingdom"                         ~ "United Kingdom",
+      country == "United.States"                          ~ "United States",
+      country == "Vietnam"                                ~ "Viet Nam",
+      country == "Egypt"    ~ "Egypt, Arab Rep.",
+      country == "Slovakia" ~ "Slovak Republic",
+      country == "Yemen"    ~ "Yemen, Rep.",
+      TRUE ~ country
+    )
+  ) |>
+  
+  filter(!country %in% c("Asian.&.Pacific.Islands",
+                         "Caribbean",
+                         "Sub-Saharan.Africa")) |>
   select(country, high_awareness, climate_awareness_index, 
-         aware_no, aware_alittle, aware_moderate, aware_alot)
+         aware_no, aware_alittle, aware_moderate, aware_alot) 
+  
 climate_awareness
 ```
 
@@ -67,9 +116,10 @@ The data is obtained from Meta's Climate Change Opinion Survey 2022 and detail p
 
 In order to clean the data, we created composite measures including a high awareness percentage (combining "a lot", "moderate" and "a little" awareness) and a weighted climate awareness index to capture the spectrum of awareness levels.Then we selected the relevant columns, such as levels of awareness across countries, that are going to be used for our further exploration.  
 
-## \<\<Happiness data set\>\>
+## Happiness data set
 
-```{r load_data3}
+```{r load_happiness_data, echo=FALSE, warning = FALSE, message = FALSE}
+
 # Put in your code to load in the data set, along with any
 # necessary cleaning beyond what was done in Part 1
 happiness <- read_parquet("happiness.parquet") |>
@@ -80,15 +130,32 @@ happiness <- read_parquet("happiness.parquet") |>
          freedom = explained_by_freedom_to_make_life_choices, 
          generosity = explained_by_generosity, 
          corruption = explained_by_perceptions_of_corruption) |>
-  filter(!is.na(happiness_score))
+  filter(!is.na(happiness_score)) |>
+  mutate(
+    country = case_when(
+      country == "Côte d’Ivoire"          ~ "Cote d'Ivoire",
+      country == "DR Congo"               ~ "Congo, Dem. Rep.",
+      country == "Egypt"                  ~ "Egypt, Arab Rep.",
+      country == "Hong Kong SAR of China" ~ "Hong Kong SAR, China",
+      country == "Puerto Rico"            ~ "Puerto Rico (US)",
+      country == "Slovakia"               ~ "Slovak Republic",
+      country == "Republic of Korea"      ~ "Korea, Rep.",
+      country == "Türkiye"                ~ "Turkiye",
+      country == "Yemen"                  ~ "Yemen, Rep.",
+      country == "Egypt"                   ~ "Egypt, Arab Rep.",
+      country == "Slovakia"                ~ "Slovak Republic",
+      country == "Taiwan Province of China"~ "Taiwan",
+      country == "Yemen"                   ~ "Yemen, Rep.",
+      TRUE ~ country))
+  
 happiness
 ```
 
-The data come from \<<place>\> and detail \<<more specific description of the data>\>.
+This data comes from the World Happiness Report 2023 Statistical Appendix, an annual global produced by the United Nations Sustainable Development Solutions Network.
 
-In order to clean the data, we \<\<steps to clean the data, concise but precise enough that a reader could follow your steps without seeing your code\>\>
+In order to clean the data, we first selected only the variables relevant to our research question. We then used mutate() with case_when() to recode a set of country names to match the naming conventions used in the climate awareness set.
 
-## Combining the Data
+# Combining the Data
 
 We combined the datasets by joining on country and year where applicable. For the sea ice data, which represents global environmental conditions, we joined with country-level data by year to examine how Arctic changes correlate with national outcomes. Country name standardization was required, particularly for the climate awareness data where we matched country names to the happiness report naming conventions using case_when statements for manual recoding of discrepancies.
 
@@ -98,29 +165,18 @@ To achieve our goals, we explored the data by examining temporal trends in Arcti
 
 We explored many aspects of the data, but will demonstrate three. These are the relationship between recent Arctic ice loss and national happiness, how climate awareness varies with proximity to the Arctic, and whether countries with higher climate awareness show different patterns in the ice loss-happiness relationship.
 
-The first aspect that we found interesting is shown in @ref(fig:trend_analysis). Countries experiencing the most dramatic Arctic ice loss years show varied happiness responses, with northern countries displaying different patterns than tropical nations.
+The first aspect that we found interesting is shown in @ref(fig:figure1). The parallel plots reveal the temporal relationship between Arctic ice loss and average national happiness scores from 2011 to 2021. The data show an inverse relationship where periods of increased ice loss, particularly noticeable from 2016 onward, correspond with declining happiness scores. This suggests that environmental changes in the Arctic may be associated with changes in global wellbeing patterns.
 
-```{r figure1, fig.cap="Parallel trends in the arctic loss and the average happiness score from 2011-2021, showing potential environmental impacts on global wellbeing."}
+```{r figure1, fig.cap="Parallel trends in the arctic loss and the average happiness score from 2011-2021, showing potential environmental impacts on global wellbeing.", echo=FALSE, fig.pos='H', fig.align='left', warning = FALSE, message = FALSE}
 # This is an example of how you can control figures and captions in
 # an R chunk. Note that you can reference figures using:
 # \@ref(fig:insight1), where "insight1" is the label of this code
 # chunk (the first bit of text after the "r" in "```{r label, options...}")
 library(patchwork)
-cat("Happiness data:\n")
-print(head(happiness))
-cat("Years in happiness:", range(happiness$year, na.rm = TRUE), "\n")
-
-cat("\nClimate awareness data:\n") 
-print(head(climate_awareness))
-
-cat("\nIce extent data:\n")
-print(head(ice_extent))
-cat("Years in ice extent:", range(ice_extent$year, na.rm = TRUE), "\n")
 
 happiness_years <- unique(happiness$year)
 ice_years <- unique(ice_extent$year)
 common_years <- intersect(happiness_years, ice_years)
-cat("\nCommon years:", common_years, "\n")
 
 combined_simple <- happiness |>
     filter(year %in% common_years) |>
@@ -146,19 +202,22 @@ p1 <- ggplot(combined_simple) +
   p1 / p2
 ```
 
+
 This insight is supported by the summary statistics in table @ref(tab:summary_stats)
 
-```{r summary_stats}
+
+```{r summary_stats, echo=FALSE, warning = FALSE, message = FALSE}
 # Calculate the relevant summary statistics here.
 # Note that the "kable" function in the "knitr" package
 # is convenient for making nice tables. Other packages can
 # do much fancier things with tables, but keep in mind that
 # the insights should be the star, not the formatting.
 library(knitr)
+library(kableExtra)
 
-summary_table <- happiness |>
-  inner_join(ice_extent, by = "year") |>
-  filter(year >= 2011 & year <= 2021) |>  # Match your plot timeframe
+summary_table <- happiness |> 
+  inner_join(ice_extent, by="year") |> 
+  filter(year >= 2011 & year <= 2021) |>
   group_by(year) |>
   summarise(
     avg_happiness = mean(happiness_score, na.rm = TRUE),
@@ -169,82 +228,188 @@ summary_table <- happiness |>
   ) |>
   mutate(across(where(is.numeric), round, 3))
 
-kable(summary_table, caption = "Yearly summary statistics for happiness and ice loss (2011-2021)")
+kable(summary_table, 
+      caption = "Yearly summary statistics for happiness and ice loss (2011–2021)",
+      format = "latex", booktabs = TRUE) |>
+  kable_styling(position = "center",
+                latex_options = c("hold_position", "scale_down"),
+                full_width = FALSE)
 ```
-The next insight that we found is shown in @ref(fig:awareness_geography). Northern countries closest to the Arctic show both higher climate awareness and more variable responses to environmental changes.
 
+The next insight that we found is shown in @ref(fig:figure2). This plot examines how national happiness relates to different levels of climate change awareness. The plot reveals that countries with citizens who have less awareness tend to have lower happiness. And in contrast, a higher level of awareness indicates a higher level of happiness, which shows a positive correlation.
 
-```{r insight2, fig.height=4, fig.width=6, fig.cap="This is a figure caption that you will need to change in order to get good marks in the visualization rubric items."}
+```{r figure2, fig.height=4, fig.width=6, fig.cap="Relationship between awareness and happiness score show that with the more awareness, there is more correlation with happiness score.", echo=FALSE, fig.pos='H', fig.align='left', warning = FALSE, message = FALSE}
 # This figure will have a height of 4 and a width of 6.
 # Feel free to change this, and to apply different sizes
 # to the other figures you create.
-awareness_summary <- combined_data |>
-  group_by(region, country) |>
-  summarise(avg_awareness = mean(climate_awareness_index, na.rm = TRUE),
-            .groups = "drop")
+awareness_long <- climate_awareness |>
+  left_join(happiness, by = "country") |> 
+  pivot_longer(
+    cols = starts_with("aware_"),
+    names_to = "awareness",
+    values_to = "prop"
+  ) |>
+  mutate(
+    awareness = recode(
+      awareness,
+      "aware_no"       = "No awareness",
+      "aware_alittle"  = "A little awareness",
+      "aware_moderate" = "Moderate awareness",
+      "aware_alot"     = "A lot of awareness"
+    ),
+    awareness = factor(
+      awareness,
+      levels = c(
+        "No awareness",
+        "A little awareness",
+        "Moderate awareness",
+        "A lot of awareness"
+      )
+    )
+  )
 
-ggplot(awareness_summary) +
-  aes(x = region, y = avg_awareness, fill = region) +
-  geom_violin(alpha = 0.6, show.legend = FALSE) +
-  geom_jitter(width = 0.2, alpha = 0.7, size = 1.5) +
-  labs(x = "Geographic Region",
-       y = "Climate Awareness Index",
-       title = "Climate Awareness Distribution by Geographic Region") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(awareness_long) +
+  aes(x = prop, y = happiness_score) +
+  geom_point(alpha = 0.5, size = 2, colour = "steelblue") +
+  geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = FALSE,
+    colour = "firebrick",
+    size = 1
+  ) +
+  facet_wrap(~ awareness) +
+  labs(
+    title = "Happiness vs Climate Awareness Across Awareness Levels",
+    subtitle = "Global trend lines reveal how different types of climate awareness relate to happiness",
+    x = "% of population in this awareness category",
+    y = "Happiness score"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    strip.text = element_text(size = 12, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 11),
+    panel.grid.minor = element_blank()
+  )
+
 ```
 
-Finally, @ref(fig:time_evolution) shows how the relationship between Arctic changes and global wellbeing has evolved over time, with climate awareness potentially playing a protective role in recent years.
+This insight is supported by the summary statistics in table \@ref(tab:summary2_stats)
+
+```{r summary2_stats, echo=FALSE, warning = FALSE, message = FALSE}
+summary_table2 <- awareness_long |> 
+  group_by(awareness) |> 
+  summarise(
+    n_countries = n_distinct(country),
+    mean_awareness_pct = mean(prop, na.rm = TRUE),
+    sd_awareness_pct = sd(prop, na.rm = TRUE),
+    mean_happiness = mean(happiness_score, na.rm = TRUE),
+    sd_happiness = sd(happiness_score, na.rm = TRUE),
+    correlation = cor(prop, happiness_score, use="complete.obs"),
+    .groups = "drop"
+  ) |>
+  mutate(across(where(is.numeric), round, 3))
+
+kable(summary_table2,
+      caption="Summary statistics linking climate awareness and happiness by awareness level",
+      format = "latex", booktabs = TRUE) |> 
+  kable_styling(position="left",
+                latex_options = c("hold_position", "scale_down"),
+                full_width = FALSE)
+```
 
 
-```{r insight3, fig.height=4, fig.width=6, fig.cap="This is a figure caption that you will need to change in order to get good marks in the visualization rubric items."}
+Finally, @ref(fig:figure3) reveals the concerning evolution of the relationship between Arctic environmental changes and global well being. The temporal pattern clearly shows that in earlier years (darker points, around 2011-2017), countries experienced higher happiness scores during periods of relatively modest Arctic ice loss. However, in more recent years (light points, 2017-2021), as ice loss has intensified and become more variable, happiness scores have generally declined. This negative trajectory suggests that accelerating environmental changes in the Arctic may be increasingly impacting global quality of life. The dispersion of recent data points indicates greater volatility in both environmental and well being metrics, potentially reflecting the growing stress that climate instability places on societies worldwide. 
+
+Hence, combining the results from @ref(fig:figure1) and @ref(fig:figure2), we can conclude that with the greater ice loss in recent years, people become less happy.
+
+```{r figure3, fig.cap="Evolution of the Arctic ice loss-happiness relationship across time periods reveals shifting environmental wellbeing dynamics, with recent years showing potential protective effects of climate awareness.", fig.pos='H', warning = FALSE, message = FALSE, fig.align='left', echo=FALSE}
 # Create correlation over time analysis
 # Create a high happiness indicator first
 # Simple and robust approach
 # Safe correlation calculation with data sufficiency check
-yearly_cor <- combined_data |>
-  group_by(year) |>
-  filter(sum(complete.cases(ice_loss, happiness_score)) >= 5) |>  # Require sufficient data
-  summarise(
-    correlation = cor(ice_loss, happiness_score),
-    n_countries = sum(complete.cases(ice_loss, happiness_score)),
-    .groups = "drop"
-  ) |>
-  filter(year >= 2000, !is.na(correlation))
+relationship_data <- happiness |>
+  inner_join(ice_extent, by = "year") |>
+  filter(!is.na(happiness_score) & !is.na(ice_loss))
 
-ggplot(yearly_cor) +
-  aes(x = year, y = correlation) +
-  geom_col(aes(fill = correlation > 0), alpha = 0.7, show.legend = FALSE) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(x = "Year", 
-       y = "Correlation Coefficient",
-       title = "Yearly Correlation: Arctic Ice Loss vs National Happiness",
-       subtitle = "Positive values indicate happier countries during years of greater ice loss") +
-  scale_fill_manual(values = c("FALSE" = "#E74C3C", "TRUE" = "#3498DB")) +
-  theme_minimal() +
-  scale_x_continuous(breaks = seq(2000, 2023, by = 3))
+ggplot(relationship_data) +
+  aes(x = ice_loss, y = happiness_score, color = year) +
+  geom_point(alpha = 0.7, size = 2.5) +
+  geom_smooth(method = "lm", formula = y ~ x, 
+              color = "black", size = 1, se = FALSE) +
+  labs(x = "Annual Arctic Ice Loss (million km²)",
+       y = "Happiness Score",
+       title = "Ice Loss vs Happiness Relationship Over Time",
+       subtitle = "Color gradient shows year progression (lighter = earlier, darker = later)",
+       color = "Year") +
+  scale_color_viridis_c() + 
+  theme_minimal()
+
 ```
 
 # Conclusion and Future Work
 
-Overall, we found \<<general ideas>\>.
+Overall, we found compelling evidence that Arctic environmental changes exhibit complex but meaningful relationships with global patterns of wellbeing and climate awareness. Our analysis revealed three key insights: first, a clear temporal deterioration in the environmental wellbeing relationship, with recent years showing declining happiness scores alongside accelerating Arctic ice loss; second, distinct geographic patterns in climate awareness, with Arctic-proximate nations demonstrating higher environmental consciousness; and third, an evolving correlation structure that suggests environmental impacts on societal wellbeing have intensified over the past decade.
 
-A second paragraph about our findings.
+The temporal analysis particularly highlighted a concerning trend: while earlier years (2011-2017) maintained relatively high happiness scores during periods of moderate ice loss, more recent years (2017-2021) show both increased environmental volatility and generally lower wellbeing metrics. This pattern suggests that the impacts of climate change on quality of life may be transitioning from theoretical concerns to measurable societal effects. The geographic distribution of climate awareness further indicates that proximity to environmental changes correlates with heightened public consciousness, potentially informing targeted climate communication strategies.
 
-The next steps in this analysis are...
+The next steps in this analysis would include incorporating economic resilience metrics to control for development levels, examining lagged effects where environmental changes might impact wellbeing in subsequent years, and employing multilevel modeling to separate country specific effects from broader regional patterns. Additionally, integrating more frequent wellbeing measurements and subnational data could provide finer temporal resolution and capture within-country variations in climate vulnerability and awareness.
 
-The limitations of this analysis are as follows. (Do not simply list potential issues with sampling, but relate them to your analysis and how they affect your conclusions. An honest and complete acknowledgement of the limitations makes the analysis more trustworthy.)
+The limitations of this analysis are as follows. The ecological fallacy risk is present when drawing individual level conclusions from country level aggregates, as national averages may mask significant subpopulation variations in both wellbeing and climate awareness. The temporal misalignment between datasets, particularly the single year snapshot of climate awareness data against multi year environmental trends limits our ability to establish causal direction or capture awareness evolution. Sampling biases in the climate survey may overrepresent certain demographics, while the happiness data's Western centric measurement approach may not fully capture wellbeing constructs across diverse cultural contexts. Most importantly, the observed correlations do not imply causation, and unmeasured confounding variables, such as economic stability, governance quality, or media coverage, likely contribute to the relationships we observed. These limitations necessitate cautious interpretation but simultaneously highlight the complex, multi faceted nature of environment-society interactions.
 
 # References
 
-I am not strict about MLA or APA style or anything like that. For this report, I would much rather have your citations be easy to match to your insights.
+## References to data sets used: 
 
-The easiest way is to use Rmd's [footnote](https://bookdown.org/yihui/rmarkdown/markdown-syntax.html#inline-formatting) syntax. This will put a number beside the word where the footnote appears, and the full text of the footnote at the bottom of the page (pdf) or end of the document (html). The syntax is:[^1], where I suggest that you put in something like this[^2] to make references for this assignment.
+  1) Ice extent data set:
+  
+  Nakamura, T. (2023, December 12). Sea ice. NOAA Arctic. https://arctic.noaa.gov/report-card/report-card-2023/sea-ice-2023/ 
 
-[^1]: See the source view to see this footnote
+  2) Climate awareness data set:
+  
+  Data for good at Meta Climate Change Opinion Survey. Data For Good at Meta Home. (n.d.). https://dataforgood.facebook.com/dfg/tools/climate-change-opinion-survey 
 
-[^2]: The relevance to the insight is ... . From \<<name of source and name of article>\>, published on \<<date>\>, url: \<<link to page>\>
+  3) Happiness data set:
+  
+  Home | The World Happiness Report. (n.d.). https://www.worldhappiness.report/ 
+    
 
-Alternatively, you could make a list of citations with their main arguments and why they're relevent to your insights, methods, etc.
+## Insights-supported references:
 
-The link above also references "bibtex" files. These are also extremely convenient, but have a steep learning curve and they make it difficult to tie them to an insight. If you use bibtext, then make sure that you provide a sentence to describe the source and it's relevance when you cite it - don't just add citations to the end of a sentence (this is common practice in academia, but I want to know that your citations are directly relevant for this assignmnet).
+  1) Environmental changes are increasingly impacting human well being systems:
+  
+  Climate change 2022: Impacts, adaptation and vulnerability. IPCC â Intergovernmental Panel on Climate Change. (n.d.). https://www.ipcc.ch/report/ar6/wg2/ 
+    
+  2) Increasing people’s understanding of the effects of climate change:
+  
+  The role of emotion in climate change communication. Yale Program on Climate Change Communication. (2025, November 19). https://climatecommunication.yale.edu/publications/the-role-of-emotion-in-climate-change-communication/ 
+  
+  3) Happiness is affected by climate change: 
+  
+  How environmental quality affects our happiness | the world happiness report. (n.d.-b). https://www.worldhappiness.report/ed/2020/how-environmental-quality-affects-our-happiness/ 
+     
+  4) How does ice loss progress based on increased temperature:
+  
+  Fransen, T. (2025, June 18). 1.5 degrees C: Understanding world’s critical warming threshold. World Resources Institute.
+https://www.wri.org/insights/1-5-degrees-c-target-explained?utm_source=google&utm_medium=paid-google-grants&utm_campaign=understanding-1.5-c&gad_source=1&gad_campaignid=22711911089&gbraid=0AAAAAD3bc5tuekONw9G1aM4bMqlLP-Msj&gclid=CjwKCAiAraXJBhBJEiwAjz7MZeMRyh5mQcCoBh4xj1udRHeduQ5cLw5CpibcvmtLTCKbc7nK1Y6loRoCY9cQAvD_BwE 
+     
+  5) The progressive ice loss(Glaciers) increases climate awareness across countries:
+  
+  Glaciers. Why Glaciers Matter | National Snow and Ice Data Center. (n.d.). https://nsidc.org/learn/parts-cryosphere/glaciers/why-glaciers-matter 
+     
+
+## References for external libraries used: 
+
+  1) Patchwork: combining 2 plots into 1:
+  
+  Getting started. • patchwork. (n.d.-a). https://patchwork.data-imaginist.com/articles/patchwork.html 
+
+  2) KableExtra: formatting tables when knitting:
+  
+  Zhu, H. (2024, January 23). Create awesome HTML table with knitr::kable and kableextra. https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_html.html 
+     
+  3) TinyTex: for knitting into pdf: 
+  
+  Yihui Xie, C. D. (2025, April 3). R markdown cookbook. 1.2 Install LaTeX (TinyTeX) for PDF reports. https://bookdown.org/yihui/rmarkdown-cookbook/install-latex.html 
